@@ -5,6 +5,7 @@ from rag.pdf_loader import load_pdf
 from rag.chunker import create_chunks
 from rag.vector_store import build_index, get_collection, get_all_documents
 from rag.generator import generate_answer
+from rag.tracer import log_trace
 from rag.hybrid_retriever import hybrid_retrieve, init_bm25
 
 st.set_page_config(
@@ -98,6 +99,22 @@ if st.button("🔍 Ask"):
         )
 
         answer = generate_answer(question, results)
+
+        # Log the trace for error analysis
+        documents = results["documents"][0]
+        metadatas = results["metadatas"][0]
+        distances = results["distances"][0]
+        
+        fetched_chunks = []
+        for doc, meta, dist in zip(documents, metadatas, distances):
+            fetched_chunks.append({
+                "source": meta.get("source", "Unknown"),
+                "page": meta.get("page", 0),
+                "distance": float(dist),
+                "text": doc
+            })
+            
+        log_trace(question, fetched_chunks, answer)
 
         st.subheader("Inspection View")
         
