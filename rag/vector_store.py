@@ -89,3 +89,14 @@ def get_collection(collection_name):
     """
     
     return chroma_client.get_collection(collection_name)
+
+def get_all_documents(collection):
+    """
+    Fetches all documents and their IDs from a given collection to build local indexes like BM25.
+    """
+    try:
+        existing = collection.get()
+        return existing["ids"], existing["documents"], existing["metadatas"]
+    except Exception:
+        return [], [], []
+
