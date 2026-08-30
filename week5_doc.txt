@@ -1,0 +1,32 @@
+WEEK 5  ·  MODULE 3  ·  EVALS & ERROR ANALYSIS  ·  THE CORE
+Error Analysis — Reading Traces Like a Professional
+Build Week
+Turn “it fails sometimes” into a ranked list of real problems, found by reading your app’s actual answers.
+At a glance
+
+What this week is about
+Until now you fixed whatever problems you happened to notice. That misses the ones you didn’t see. This week you become systematic: read a real batch of the app’s answers, honestly note what went wrong in each, and turn that into a ranked list of the top problems worth fixing.
+Why it matters
+
+What you’ll learn
+What a complete “trace” is — enough detail to replay any answer later
+Taking a fair, random sample instead of cherry-picking nice examples
+Reading each failure and writing one honest sentence about what went wrong — before deciding on categories
+Grouping those notes into a handful of named problem types
+Ranking the problem types by how often they happen and how much they hurt
+Picking the one problem to attack next, and writing down what you expect to happen
+Topics covered
+The exact concepts to study.
+
+Your task this week
+Evaluated: Week 6 · Monday
+Collect around 20 real answers from your app, read every one, and write a short honest note on each failure. Group the notes into a few named problems and rank them, so you have a clear list of what to fix first.
+Assigned tracks
+Same task, six different topics — so everyone works on their own version. Download whichever you are assigned.
+How your mentor checks
+Friday · no marks
+A quick review of your task. Not a test — just a few things your mentor looks at, so you can fix anything before Monday.
+Did they read a fair sample, not just the good examples?
+Is there an honest note per failure, written before grouping them?
+Do the problem groups have clear names a stranger would understand?
+Are the problems ranked, with a chosen target to fix next?
