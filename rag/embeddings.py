@@ -11,7 +11,11 @@ API_KEY = os.getenv("GOOGLE_API_KEY")
 client = genai.Client(api_key=API_KEY)
 
 
+import time
+
 def create_embedding(text):
+    # Throttle to safely bypass the 100 requests/min Free Tier API limit!
+    time.sleep(1.0)
     """
     Sends text to Google Gemini's embedding model to convert the text 
     into a high-dimensional vector (an array of numbers representing meaning).
