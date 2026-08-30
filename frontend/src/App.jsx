@@ -50,8 +50,8 @@ function App() {
     for (let i = 0; i < files.length; i++) {
         formData.append('files', files[i]);
     }
-    formData.append('chunk_size', 500);
-    formData.append('overlap', 50);
+    formData.append('chunk_size', 1500);
+    formData.append('overlap', 150);
 
     try {
       const res = await fetch(`${API_URL}/build-index`, {
