@@ -1,0 +1,27 @@
+# AI & RAG Terminology Glossary
+
+## General AI & LLM Terms
+* **LLM (Large Language Model):** AI models trained on vast amounts of text data, capable of understanding and generating human-like language (e.g., Google Gemini).
+* **Prompt Engineering:** The practice of carefully crafting instructions and context provided to an LLM to ensure accurate, correctly formatted, and constrained outputs.
+* **Hallucination:** An error where an AI confidently generates incorrect, fabricated, or nonsensical information. RAG is designed to mitigate this.
+* **Grounding:** Forcing the AI model to anchor its answers in a specific, verified dataset rather than relying on its internal, pre-trained knowledge.
+* **LLM-as-a-Judge:** The practice of using a powerful, highly capable LLM to evaluate, critique, or score the outputs of another system (or itself).
+
+## Search & Retrieval (RAG Core)
+* **Hybrid Search:** Combining multiple distinct search algorithms (typically Semantic/Vector and Keyword/Lexical) to get the best of both worlds.
+* **BM25 (Best Matching 25):** A highly effective, traditional algorithm used by search engines to rank documents based on the frequency and rarity of search terms.
+* **Cross-Encoder / Reranker:** A specialized ML model that compares a user query directly against a document to output a highly accurate relevance score, used to re-sort a preliminary list of search results.
+
+## Evaluation & Metrics
+* **Ragas (RAG Assessment):** An industry-standard framework designed specifically to evaluate Retrieval-Augmented Generation pipelines without requiring human-labeled ground truth.
+* **Faithfulness (Metric):** A measurement of whether the generated answer can be directly and solely inferred from the provided context (penalizing hallucination).
+* **Answer Relevancy (Metric):** A measurement of whether the generated answer actually directly addresses the user's original query (penalizing tangential rambling).
+
+## Architecture & Engineering
+* **Tracing / Telemetry:** The automated process of recording the internal state, inputs, and outputs of an application during execution for later analysis.
+* **Failure Analysis:** Systematically reviewing errors and execution traces to identify and categorize root causes.
+* **.jsonl (JSON Lines):** A structured file format where each line is a valid JSON object. It is exceptionally efficient for incrementally appending log files without loading the entire file into memory.
+* **Decoupled Architecture:** A system design where the frontend presentation layer is completely separated from the backend logic layer, communicating only via standardized network APIs.
+* **FastAPI:** A modern, incredibly fast, high-performance web framework for building APIs with Python.
+* **SPA (Single Page Application):** A web application that interacts with the browser by dynamically rewriting the current web page with new data from the web server, rather than loading entire new pages, creating a smoother user experience.
+* **Glassmorphism:** A UI design trend characterized by semi-transparent backgrounds, subtle borders, and background blur, giving elements the appearance of frosted glass.

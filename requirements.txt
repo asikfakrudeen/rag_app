@@ -3,3 +3,6 @@ PyMuPDF
 chromadb
 python-dotenv
 google-genai
+python-docx
+pandas
+openpyxl

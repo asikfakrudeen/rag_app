@@ -5,49 +5,67 @@ from rag.embeddings import create_embedding
 chroma_client = chromadb.PersistentClient(path="./data/chroma")
 
 
-def build_index(chunks, collection_name):
+def build_index(chunks, collection_name, append=True):
     """
-    Build (or rebuild) a ChromaDB collection from the given chunks
-    by calculating their embeddings and storing everything in the database.
-    
-    Example:
-        Input: 
-            chunks = [{"id": "doc_1_0", "text": "hello", "page": 1, "source": "doc.pdf"}]
-            build_index(chunks, "legal_contracts")
-            
-        Output: <chromadb.api.models.Collection object>
+    Build or update a ChromaDB collection from the given chunks.
+
+    Args:
+        append (bool): 
+            True  → Keep existing chunks from OTHER documents. Only remove
+                    chunks that belong to the same source files being re-indexed
+                    (prevents duplicates on re-upload without wiping other docs).
+            False → Wipe the entire collection before inserting (full rebuild).
     """
 
-    # Fetch the collection if it exists, or create a brand new one
-    collection = chroma_client.get_or_create_collection(
-        name=collection_name
-    )
+    collection = chroma_client.get_or_create_collection(name=collection_name)
 
-    # Fetch existing data from the collection
-    existing = collection.get()
+    if append:
+        # Find which source files are present in the new chunks
+        new_sources = {chunk["source"] for chunk in chunks}
 
-    # Clear out old existing data so we don't accidentally duplicate
-    if existing["ids"]:
-        collection.delete(ids=existing["ids"])
+        # Fetch all existing data and remove only chunks from those same sources
+        existing = collection.get(include=["metadatas"])
+        ids_to_remove = [
+            doc_id
+            for doc_id, meta in zip(existing["ids"], existing["metadatas"])
+            if meta.get("source") in new_sources
+        ]
+        if ids_to_remove:
+            collection.delete(ids=ids_to_remove)
+    else:
+        # Full wipe — remove every chunk in the collection
+        existing = collection.get()
+        if existing["ids"]:
+            collection.delete(ids=existing["ids"])
 
-    # Loop through each chunk sent by the chunker
+    # Embed and insert new chunks
     for chunk in chunks:
-
-        # Convert the chunk text into a mathematical vector
         embedding = create_embedding(chunk["text"])
-
-        # Insert everything into the ChromaDB collection
         collection.add(
-            ids=[chunk["id"]],               # Using the unique ID we generated in chunker.py
-            embeddings=[embedding],          # The math
-            documents=[chunk["text"]],       # The raw English text
-            metadatas=[{                     # Associated metadata (to cite sources later)
+            ids=[chunk["id"]],
+            embeddings=[embedding],
+            documents=[chunk["text"]],
+            metadatas=[{
                 "source": chunk["source"],
                 "page": chunk["page"]
             }]
         )
 
     return collection
+
+
+def clear_index(collection_name):
+    """
+    Wipes all data from a collection. Used by the /clear-index API endpoint.
+    """
+    try:
+        collection = chroma_client.get_collection(collection_name)
+        existing = collection.get()
+        if existing["ids"]:
+            collection.delete(ids=existing["ids"])
+        return True
+    except Exception:
+        return False
 
 
 def retrieve(collection, question, top_k):

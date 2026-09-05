@@ -6,9 +6,9 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from rag.pdf_loader import load_pdf
+from rag.document_loader import load_document, SUPPORTED_EXTENSIONS
 from rag.chunker import create_chunks
-from rag.vector_store import build_index, get_collection, get_all_documents
+from rag.vector_store import build_index, get_collection, get_all_documents, clear_index
 from rag.generator import generate_answer
 from rag.tracer import log_trace
 from rag.hybrid_retriever import hybrid_retrieve, init_bm25
@@ -45,10 +45,16 @@ async def api_build_index(
     all_pages = []
     
     for uploaded_file in files:
+        ext = os.path.splitext(uploaded_file.filename)[1].lower()
+        if ext not in SUPPORTED_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file type '{ext}'. Supported: {', '.join(SUPPORTED_EXTENSIONS)}"
+            )
         path = os.path.join("documents", uploaded_file.filename)
         with open(path, "wb") as buffer:
             shutil.copyfileobj(uploaded_file.file, buffer)
-        pages = load_pdf(path)
+        pages = load_document(path)
         all_pages.extend(pages)
         
     chunks = create_chunks(all_pages, chunk_size, overlap)
@@ -62,6 +68,17 @@ async def api_build_index(
     app_state["indexed"] = True
     
     return {"status": "success", "indexed_chunks": len(chunks)}
+
+
+@app.delete("/clear-index")
+async def api_clear_index():
+    """
+    Wipes all chunks from the ChromaDB collection and resets the in-memory
+    BM25 state. Call this when you want to start fresh with new documents.
+    """
+    cleared = clear_index("legal_contracts")
+    app_state.clear()
+    return {"status": "cleared" if cleared else "already_empty"}
 
 
 @app.post("/ask")
