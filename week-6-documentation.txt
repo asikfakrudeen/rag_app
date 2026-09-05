@@ -1,0 +1,13 @@
+Week 6: Automated Evals & LLM-as-a-Judge
+
+Concept
+Scaling the error analysis from Week 5 by utilizing LLMs to automatically grade and score the RAG system's answers against defined quality metrics, creating a data-driven confidence structure.
+
+Flow
+Evaluation Dataset ➔ RAG System Generates Answers ➔ evaluate.py Triggers Ragas Framework ➔ Evaluator LLM Scores Metrics ➔ Output Quantitative Dashboard
+
+Explanation
+Manual review does not scale as the application grows. This week scripts independent evaluation loops (evaluate.py) utilizing the Ragas framework. The system automatically scores the stored .jsonl traces on complex metrics. Furthermore, validate_judge.py is utilized to mathematically calculate correlation matrices, definitively proving that the automated "LLM-Judge" accuracy correlates flawlessly against actual human evaluation penalties.
+
+Advantage
+Allows for continuous integration testing. Developers can immediately and quantitatively see if a minor prompt tweak or chunking change improved or degraded the overall system performance across hundreds of test cases.

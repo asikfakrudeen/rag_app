@@ -1,0 +1,13 @@
+Week 7: Architecture Decoupling & UI Polish (Production Readiness)
+
+Concept
+Moving from a monolithic prototype (like Streamlit) to a production-ready, highly scalable architecture by strictly separating the user interface from the backend logic.
+
+Flow
+React UI (User Input) ➔ HTTP POST Request ➔ FastAPI Backend (api.py) ➔ RAG Pipeline Execution ➔ JSON Response ➔ React UI Renders Result
+
+Explanation
+To make the application highly scalable and user-friendly, the architecture is decoupled. The graphical interface is rebuilt as a custom React Single Page Application (served via Vite) featuring a premium "glassmorphic" aesthetic (App.jsx, index.css). The Python logic is centralized into a high-performance FastAPI server (api.py) exposing /build-index and /ask endpoints, which securely handle the core RAG algorithms and API limits.
+
+Advantage
+Allows independent scaling and deployment of the frontend and backend. It enables building rich, custom, interactive web experiences (like dynamic chat interfaces and deep document inspection) that are impossible in basic dashboarding tools, while keeping Python processing secure and performant.
