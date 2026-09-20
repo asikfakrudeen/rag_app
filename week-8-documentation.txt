@@ -1,0 +1,19 @@
+Week 8: Agent Failure Modes & Trajectory Evals
+
+Concept
+Evaluating an agent on the final answer alone misses critical failures. A correct answer reached by a lucky wrong path will break in production. This week adds trajectory evaluation (scoring the full Thought-Action-Observation chain), defends the agent against prompt injection attacks, and fixes the top failure mode with measurable before-and-after numbers.
+
+Flow
+traces.jsonl (Agent Runs) ➔ trajectory_eval.py Parses Memory Chains ➔ Scores Each Run (path_score, gap_detected, loop_detected) ➔ trajectory_report.csv
+Retrieved Document ➔ _sanitize_observation() Scans for Injection Patterns ➔ Safe Observation Fed to LLM (or [INJECTION BLOCKED])
+Format Error ➔ _FORMAT_EXAMPLE Reprompt with Filled-In Example ➔ LLM Retries Correctly
+
+Explanation
+The ReAct agent in agent_loop.py was already recording its full Thought/Action/Observation chain into traces.jsonl. However, only the final answer was ever checked. This week, trajectory_eval.py is built to read every recorded agent run and score the path it took, not just the outcome. It detects three failure modes: (1) outcome-vs-trajectory gaps — cases where the answer was correct but the agent looped or guessed rather than properly retrieved; (2) repeated Action Inputs — a sign of an infinite loop consuming the iteration budget; (3) format errors — where the LLM output did not match the Thought/Action/Action Input structure, burning iterations on retries.
+
+For security, a prompt injection defense is added inside agent_loop.py. Every observation returned by the search tool is passed through _sanitize_observation(), which scans for known hijack patterns (IGNORE INSTRUCTIONS, ACT AS, FORGET EVERYTHING, etc.) before the text ever reaches the LLM context. demo_injection.py demonstrates the attack succeeding without the defense, then the same attack being blocked cleanly.
+
+The top failure mode — vague format error reprompts that caused the LLM to repeat the same malformed output — is fixed by replacing the generic error message with _FORMAT_EXAMPLE, a concrete filled-in template showing exactly what the next output should look like. Format error rate dropped from ~0.40 per step to ~0.05.
+
+Advantage
+Trajectory evaluation catches reliability problems that outcome-only metrics will never surface. An agent that gives the right answer for the wrong reason is fragile; catching it before production, measuring it, and fixing it is what separates a prototype from a reliable system.
