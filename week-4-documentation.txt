@@ -1,0 +1,21 @@
+Week 4: Advanced Hybrid Retrieval
+
+Concept
+Enhancing the retrieval engine's accuracy by combining mathematical semantic search (Vectors) with exact-match keyword search, and then using a machine learning reranker to finalize the ordering of the retrieved documents.
+
+Flow
+User Query ➔ Parallel Search (ChromaDB for Semantic + BM25 for Keyword) ➔ Merge & Deduplicate Results ➔ Cross-Encoder Reranker Evaluates Relevance ➔ Top-N Chunks Sent to LLM
+
+Explanation
+While vector search (introduced in Weeks 1 and 2) is excellent at understanding the 'meaning' or 'semantic intent' of a query, it has a significant blind spot: it can fail to retrieve documents based on exact keyword matches, such as specific contract IDs, names of legal entities, or precise legal jargon.
+
+Week 4 solves this by implementing an 'Advanced Hybrid Retrieval' pipeline. This involves two major upgrades to the search mechanism:
+
+1. Hybrid Search (BM25 + Vectors): When a user queries the system, it now runs two searches in parallel. One search uses ChromaDB for mathematical semantic matching (understanding the meaning), and the second uses the BM25 algorithm for pure, exact-match keyword searching. The results from both engines are then merged and deduplicated, ensuring that neither semantic meaning nor exact keywords are missed.
+
+2. Cross-Encoder Reranking: Merging two sets of search results can create a messy, unoptimized list. To fix this, a specialized Machine Learning model called a 'Cross-Encoder Reranker' is introduced. This model takes the merged list of chunks and evaluates each one directly against the user's query, outputting a highly accurate relevance score. It then re-sorts the entire list, mathematically forcing the absolute most relevant and highest-fidelity clauses to the very top. 
+
+By sending only these highly optimized, top-ranked chunks to the LLM, the system dramatically improves its accuracy, minimizes distracting context, and significantly reduces the chances of the LLM failing to find the answer.
+
+Advantage
+Vastly improves retrieval accuracy, especially for highly technical domain-specific jargon like legal contracts. It ensures the LLM always receives the absolute best context, reducing "I don't know" responses and improving the overall quality of the generated answers.

@@ -1,0 +1,19 @@
+Week 3: Generative Base (Connecting LLM to Vector Store)
+
+Concept
+Transitioning from pure information retrieval (search) to a complete RAG system. This involves intercepting retrieved document contexts and securely feeding them into a Large Language Model (LLM) to generate cohesive, natural language answers that are strictly grounded in facts.
+
+Flow
+User Query ➔ ChromaDB Vector Search ➔ Retrieve Top-K Chunks ➔ Combine Query & Chunks into a Prompt ➔ Send to LLM (Gemini) ➔ Return Synthesized Answer
+
+Explanation
+In the foundational weeks (Weeks 1 and 2), the system learned to ingest and parse various document formats (PDF, DOCX, CSV, etc.) and perform basic mathematical semantic searches by converting text into vector embeddings stored in ChromaDB. 
+
+Week 3 marks the crucial shift from a mere "search engine" to a true "RAG" (Retrieval-Augmented Generation) pipeline. This is achieved by introducing the `generator.py` module, which acts as the bridge between our database and the AI.
+
+When a user asks a question, the system first retrieves the top most relevant chunks from ChromaDB. Instead of just displaying these raw chunks to the user, the `generator.py` module intercepts them. It injects these chunks, along with the user's original question, into a highly structured, rigid "Prompt." 
+
+This prompt acts as a strict instruction manual for the Large Language Model (Google Gemini). It explicitly mandates the LLM to read the provided chunks and write a synthesized, conversational answer. Most importantly, it enforces strict "grounding"—the LLM is instructed to utilize *only* the facts present in the cited context and to refuse to answer if the context does not contain the necessary information. This combines the reasoning capabilities of the LLM with the irrefutable factual accuracy of the uploaded legal documents, completely eliminating the AI's tendency to guess or "hallucinate" legal clauses based on its pre-trained data.
+
+Advantage
+Users receive a direct, synthesized conversational answer instead of just a list of relevant document links. By enforcing strict "grounding" within the prompt, the system dramatically reduces the risk of the LLM fabricating legal clauses (hallucination).
