@@ -30,6 +30,29 @@ npm run dev
 ```
 *(You can then click `http://localhost:5173` in your terminal to see the beautiful web UI!)*
 
+## Week 9 — MCP
+
+The legal assistant discovers tools from `mcp_server/contract_repository.py`. Gemini runs in the host (`rag/agent_loop.py`). The server only reads the contract index.
+
+```powershell
+python scripts/show_mcp_handshake.py
+python scripts/demo_mcp.py
+```
+
+To let another agent call the same server:
+
+```powershell
+$env:MCP_AUTH_TOKEN = "a-long-random-token"
+python -m mcp_server.contract_repository --http --port 8765
+```
+
+```powershell
+$env:MCP_AUTH_TOKEN = "a-long-random-token"
+python scripts/remote_agent_call.py
+```
+
+See `week-9-documentation.txt` for the host / client / server split.
+
 ## Technical Defenses (Bypassing API limits!)
 Generating mathematical arrays for enormous contracts quickly hits Google's Free Tier quotas limit. To protect your backend from a `RESOURCE_EXHAUSTED` server crash, the system uses two main optimizations:
 1. `App.jsx` expands chunks heavily up to `1500`, drastically reducing total chunk quantities.

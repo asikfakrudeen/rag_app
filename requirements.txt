@@ -6,3 +6,4 @@ google-genai
 python-docx
 pandas
 openpyxl
+mcp>=2.2.0
