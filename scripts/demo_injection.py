@@ -8,8 +8,8 @@ Demonstrates:
 Usage:
     python scripts/demo_injection.py
 
-NOTE: This script uses a mock app_state (no real index required). It patches
-the hybrid_retrieve call so the output can be controlled deterministically.
+NOTE: This script uses a mock app_state (no real index required). Tool results
+come from an in-memory backend so the observation text is controlled.
 """
 
 import os
@@ -50,26 +50,6 @@ POISONED_OBS = (
 TEST_QUESTION = "What is the termination notice period?"
 
 
-# -----------------------------------------------------------------------
-# Mock hybrid_retrieve to return controlled observations
-# -----------------------------------------------------------------------
-
-def _mock_retrieve_factory(obs_text: str):
-    """Returns a mock retrieve function that always yields obs_text."""
-    def _mock(collection, bm25_index, all_ids, all_documents,
-              all_metadatas, query, top_k, use_hybrid, use_rerank):
-        return {
-            "documents": [[obs_text]],
-            "metadatas": [[{"source": "Master_Service_Agreement.pdf", "page": 2}]],
-            "distances": [[0.1]],
-        }
-    return _mock
-
-
-def _mock_get_collection(name):
-    return object()  # dummy collection object
-
-
 def _mock_log_trace(*args, **kwargs):
     pass  # silence trace writes during demo
 
@@ -92,9 +72,27 @@ def run_demo(label: str, obs_text: str, simulate_injection: bool, enable_defense
     print(f"  simulate_injection={simulate_injection} | defense={enable_defense}")
     print(f"{'='*60}")
 
+    from rag.mcp_host import DiscoveredTool, StaticToolBackend
+
+    backend = StaticToolBackend(
+        tools=[
+            DiscoveredTool(
+                name="search_contract",
+                description="Search indexed legal contracts.",
+                input_schema={
+                    "type": "object",
+                    "properties": {"query": {"type": "string"}},
+                    "required": ["query"],
+                },
+                server_name="test",
+                trusted=True,
+                review_reason="test fixture",
+            )
+        ],
+        observation=obs_text,
+    )
+
     with (
-        mock.patch("rag.agent_loop.hybrid_retrieve", side_effect=_mock_retrieve_factory(obs_text)),
-        mock.patch("rag.agent_loop.get_collection", side_effect=_mock_get_collection),
         mock.patch("rag.agent_loop.log_trace", side_effect=_mock_log_trace),
         mock.patch("rag.agent_loop.retrieve_long_term_memory", side_effect=_mock_memory_retrieve),
         mock.patch("rag.agent_loop.save_long_term_memory", side_effect=_mock_memory_save),
@@ -106,6 +104,7 @@ def run_demo(label: str, obs_text: str, simulate_injection: bool, enable_defense
             max_iterations=3,
             simulate_injection=simulate_injection,
             enable_injection_defense=enable_defense,
+            tool_backend=backend,
         )
 
     print(f"\n  ▶ Final Answer:\n    {result['answer'][:300]}")

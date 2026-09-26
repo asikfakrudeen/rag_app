@@ -1,0 +1,35 @@
+Week 9: MCP, Multi-Agent & A2A
+
+Concept
+Tools used to be wired into the agent by hand, so no other team could reuse them. MCP is a shared socket: the host discovers tools, the server only offers them, and the model stays on the host. This week the legal assistant discovers its tools over MCP, and the contract repository is itself an MCP server another agent can call.
+
+Flow
+Agent host (Gemini runs here) ➔ MCP client initialize + tools/list ➔ tool review ➔ tools/call
+Contract repository server (no model) ➔ search_contract / list_contracts / catalog resource / ask_about_clause prompt
+Another person's agent ➔ HTTP + bearer token ➔ same server, discovered again
+
+Roles
+Host: rag/agent_loop.py. This is where Gemini runs and where the prompt lives.
+Client: rag/mcp_host.py. It speaks MCP for the host, reviews each tool, and calls the ones that pass.
+Server: mcp_server/contract_repository.py. It reads the Chroma contract index and returns text. It never calls Gemini.
+
+Explanation
+The ReAct loop no longer contains a hard-coded tool list. On each run the host spawns the contract repository over stdio, completes the JSON-RPC initialize handshake, and reads tools/list. search_contract and list_contracts are both registered only on the server. A new @server.tool() on that server is picked up the next time the host connects, without an edit to the agent.
+
+Before a discovered tool is shown to the model, review_tool checks the name and description. A sample server that advertises run_shell is discovered and then dropped, so the model never sees it. Observations that come back are still passed through the Week 8 injection sanitizer.
+
+The same server can listen on streamable HTTP. That mode refuses to start unless MCP_AUTH_TOKEN is set, and every request must send Authorization: Bearer <token>. scripts/remote_agent_call.py is a separate caller: it does not import the legal assistant, it only discovers tools and calls one. Tool failures are returned as text (Tool error (recoverable)) so the agent loop can try again instead of crashing.
+
+Where the AI runs
+On the host, in this application, when agent_loop asks Gemini for the next Thought or Final Answer. It does not run inside the contract repository. The server cannot tell which model called it. MCP is the plumbing that lets tools be shared; it does not make the answers better by itself.
+
+How to run
+    python scripts/show_mcp_handshake.py
+    python scripts/demo_mcp.py
+
+    $env:MCP_AUTH_TOKEN = "a-long-random-token"
+    python -m mcp_server.contract_repository --http --port 8765
+    python scripts/remote_agent_call.py
+
+Advantage
+A tool built once can be used by this agent and by someone else's agent. Swapping or adding a tool is a server change, and the host still checks the tool before it trusts it.
