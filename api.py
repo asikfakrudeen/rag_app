@@ -10,8 +10,9 @@ from rag.document_loader import load_document, SUPPORTED_EXTENSIONS
 from rag.chunker import create_chunks
 from rag.vector_store import build_index, get_collection, get_all_documents, clear_index
 from rag.generator import generate_answer
-from rag.tracer import log_trace
+from rag.tracer import log_trace, get_trace_by_id, search_traces_by_keyword
 from rag.hybrid_retriever import hybrid_retrieve, init_bm25
+import time
 
 app = FastAPI(title="RAG Backend API")
 
@@ -83,6 +84,7 @@ async def api_clear_index():
 
 @app.post("/ask")
 async def api_ask(req: AskRequest):
+    start_time = time.time()
     if not app_state.get("indexed"):
         raise HTTPException(status_code=400, detail="Please build the index first.")
         
@@ -115,9 +117,23 @@ async def api_ask(req: AskRequest):
             "text": doc
         })
         
-    log_trace(req.question, fetched_chunks, answer)
+    latency_ms = (time.time() - start_time) * 1000
+    trace_id = log_trace(req.question, fetched_chunks, answer, latency_ms=latency_ms)
     
     return {
         "answer": answer,
-        "evidence": fetched_chunks
+        "evidence": fetched_chunks,
+        "trace_id": trace_id
     }
+
+@app.get("/traces/{trace_id}")
+async def api_get_trace(trace_id: str):
+    trace = get_trace_by_id(trace_id)
+    if not trace:
+        raise HTTPException(status_code=404, detail="Trace not found")
+    return trace
+
+@app.get("/traces")
+async def api_search_traces(q: str):
+    traces = search_traces_by_keyword(q)
+    return {"results": traces}

@@ -1,0 +1,57 @@
+Week 11 — Production, Observability & The Data Flywheel
+
+Module: Module 6 — Production
+Theme:  A bad answer among thousands from a vague complaint isn’t a bug, it’s a missing trace.
+
+─────────────────────────────────────────────────────────────────────
+WHAT WAS BUILT
+─────────────────────────────────────────────────────────────────────
+Track F (Legal Contracts) required us to add robust observability so that
+every request is assigned a unique trace ID. We then practiced the
+"Support Drill": finding a specific hallucinated answer in the logs from
+a vague user complaint.
+
+We updated `rag/tracer.py` to emit a `trace_id` alongside every log
+in `traces.jsonl`. We updated the `/ask` endpoint in `api.py` to return 
+this `trace_id` directly to the client, along with new endpoints `/traces`
+to search history. 
+
+We then built `scripts/support_drill.py` to simulate a user complaining 
+about an incorrect termination clause (60 days), proving we can find it
+without an ID, isolate the root cause, and establish a regression test.
+
+─────────────────────────────────────────────────────────────────────
+KEY CONCEPTS LEARNED
+─────────────────────────────────────────────────────────────────────
+1. What to log per request
+   - Do NOT just log the final text.
+   - You MUST log: the raw inputs, the retrieved chunks (their source/page), 
+     the generated answer, total latency, total tokens, the exact model version, 
+     and crucially, a unique TRACE ID.
+
+2. Traces & Spans
+   - Trace: The entire journey of a single user request (e.g. they hit /ask).
+   - Span: A specific step within that trace (e.g. BM25 search span, LLM generation span).
+   - Tools like LangSmith, Phoenix, or OpenTelemetry visualize these graphs.
+
+3. The Support Drill
+   - A standard operating procedure. When a user says "it gave a wrong answer yesterday", 
+     your ONLY hope is being able to text-search the traces or lookup by Trace ID.
+   - Finding the specific trace allows you to see the exact context chunks the LLM was fed.
+   - The Support Drill turns a complaint into a root-cause diagnosis, which turns into a permanent regression test.
+
+4. Cost Per Query
+   - You must know what a single query costs (e.g., $0.0003). 
+   - A 10x spike in traffic shouldn't surprise your finance team.
+
+5. Caching Strategies
+   - Prompt Caching: If a massive prompt (like a long contract) is reused frequently 
+     within a short window, you can cache the KV states of the LLM to drastically cut costs.
+   - Semantic Caching: Caching the exact final answer for semantically identical questions 
+     so the LLM (and retriever) aren't even invoked.
+
+6. The Data Flywheel & The 10x Plan
+   - The real value of AI companies is the proprietary data engine.
+   - As users interact, you log failure cases. You label them. You use them as few-shot examples or evaluation sets.
+   - Over time, your system improves automatically while you sleep exactly *because* you log traces meticulously.
+   - Fine-tuning is the last resort — implemented only when you have a massive, curated dataset of traces.
