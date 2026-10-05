@@ -1,0 +1,92 @@
+Week 10 — Multi-Agent & A2A with Evidence
+
+Module: Module 5 — MCP, Multi-Agent & A2A
+Theme:  Build a team of AI agents and race it against a single agent — keep whichever actually wins.
+
+─────────────────────────────────────────────────────────────────────
+WHAT WAS BUILT
+─────────────────────────────────────────────────────────────────────
+Track F (Legal Contracts) required building a manager-plus-specialists
+multi-agent squad and racing it against the Week 9 single ReAct agent on
+four measurable dimensions: quality, latency, tokens, and cost.
+
+SYSTEM ARCHITECTURE
+
+Single Agent (Week 9 baseline):
+  ┌──────────────────────────────┐
+  │  run_agent_loop()            │
+  │  ReAct loop, up to 5 turns   │
+  │  MCP tool calls (contract    │
+  │  repository)                 │
+  └──────────────────────────────┘
+
+Multi-Agent Squad (Week 10):
+  ┌────────────────────────────────────────────────────┐
+  │  OrchestratorAgent                                 │
+  │  ├── Step 0: hybrid_retrieve (BM25 + vector + RRF) │
+  │  ├── ClauseRetrieverAgent  — verbatim clause text  │
+  │  ├── RiskAnalystAgent      — flags risks/obligations│
+  │  └── SummaryDrafterAgent   — plain-English answer  │
+  └────────────────────────────────────────────────────┘
+
+Each specialist is a focused single-shot Gemini 2.0 Flash call with a
+narrowed system prompt. Token usage is captured via response.usage_metadata.
+
+─────────────────────────────────────────────────────────────────────
+KEY CONCEPTS LEARNED
+─────────────────────────────────────────────────────────────────────
+A2A (Agent-to-Agent):
+  A protocol standard for one agent to delegate work to another. MCP
+  connects an agent to tools; A2A connects an agent to other agents.
+  This week's orchestrator–specialist pattern implements A2A-style
+  delegation without a formal A2A protocol library.
+
+Orchestrator–Worker:
+  The orchestrator manages the routing and sequencing. Workers
+  (specialists) have no knowledge of each other — they receive a
+  focused input and produce a focused output.
+
+Context Re-Send Cost:
+  A critical drawback of multi-agent teams: every specialist must
+  receive the full context for its sub-task. If the orchestrator
+  routes to three specialists, the contract context may be sent to the
+  LLM three times, multiplying token spend vs a single agent pass.
+
+─────────────────────────────────────────────────────────────────────
+RACE RESULTS
+─────────────────────────────────────────────────────────────────────
+Run the race script from the project root:
+
+  .\.venv\Scripts\python.exe scripts/race_multi_vs_single.py
+
+This produces race_report.md with:
+  - Quality scores (1–5, LLM-as-judge)
+  - Latency (wall-clock seconds)
+  - Token counts (input + output)
+  - Estimated cost (USD, Gemini 2.0 Flash pricing)
+  - An honest verdict backed by the numbers
+
+─────────────────────────────────────────────────────────────────────
+WHEN MULTI-AGENT IS WORTH IT
+─────────────────────────────────────────────────────────────────────
+✅ Use a multi-agent squad when:
+  - The task has clearly separable sub-tasks (retrieve → analyse → draft)
+  - You need specialist-grade accuracy for each reasoning step
+  - Parallelisation is possible (specialist calls can run concurrently
+    when they don't depend on each other)
+  - Auditability matters — each agent step can be logged and inspected
+
+❌ Avoid multi-agent when:
+  - The question is simple and single-turn (extra token cost with no gain)
+  - Token budget is tight — context re-sending can cost 3× more
+  - Latency is critical — sequential specialist calls add wall-clock time
+  - The single-agent ReAct loop already produces reliable answers
+
+─────────────────────────────────────────────────────────────────────
+FILES ADDED / MODIFIED
+─────────────────────────────────────────────────────────────────────
+NEW  rag/multi_agent/__init__.py          Package init
+NEW  rag/multi_agent/specialists.py       Three specialist agents
+NEW  rag/multi_agent/orchestrator.py      Orchestrator + context retrieval
+NEW  scripts/race_multi_vs_single.py      Race + judge + report generator
+NEW  week-10-documentation.txt            This documentation file
